@@ -325,6 +325,11 @@ func Provider() *schema.Provider {
 			"ibm_tg_gateways":  dataSourceIBMTransitGateways(),
 			"ibm_tg_locations": dataSourceIBMTransitGatewaysLocations(),
 			"ibm_tg_location":  dataSourceIBMTransitGatewaysLocation(),
+
+			//Added for BSS Enterprise
+			"ibm_enterprises":    dataSourceIbmEnterprises(),
+			"ibm_account_groups": dataSourceIbmAccountGroups(),
+			"ibm_accounts":       dataSourceIbmAccounts(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -513,6 +518,11 @@ func Provider() *schema.Provider {
 			"ibm_tg_gateway":           resourceIBMTransitGateway(),
 			"ibm_tg_connection":        resourceIBMTransitGatewayConnection(),
 			"ibm_cm_offering_instance": resourceIBMCmOfferingInstance(),
+
+			//Added for enterprise
+			"ibm_enterprise":               resourceIbmEnterprise(),
+			"ibm_enterprise_account_group": resourceIbmEnterpriseAccountGroup(),
+			"ibm_enterprise_account":       resourceIbmEnterpriseAccount(),
 		},
 
 		ConfigureFunc: providerConfigure,

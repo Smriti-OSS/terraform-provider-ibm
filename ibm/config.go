@@ -88,6 +88,7 @@ import (
 	ibmpisession "github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM-Cloud/terraform-provider-ibm/version"
 	"github.com/IBM/platform-services-go-sdk/catalogmanagementv1"
+	"github.com/IBM/platform-services-go-sdk/enterprisemanagementv1"
 )
 
 // RetryAPIDelay - retry api delay
@@ -240,6 +241,8 @@ type ClientSession interface {
 	IAMIdentityV1API() (*iamidentity.IamIdentityV1, error)
 	ResourceManagerV2API() (*resourcemanager.ResourceManagerV2, error)
 	CatalogManagementV1() (*catalogmanagementv1.CatalogManagementV1, error)
+	/**Added **/
+	EnterpriseManagementV1() (*enterprisemanagementv1.EnterpriseManagementV1, error)
 }
 
 type clientSession struct {
@@ -304,6 +307,9 @@ type clientSession struct {
 
 	userManagementErr error
 	userManagementAPI usermanagementv2.UserManagementAPI
+
+	enterprise    *enterprisemanagementv1.EnterpriseManagementV1
+	enterpriseErr error
 
 	icdConfigErr  error
 	icdServiceAPI icdv4.ICDServiceAPI
@@ -459,6 +465,9 @@ type clientSession struct {
 	//Catalog Management Option
 	catalogManagementClient    *catalogmanagementv1.CatalogManagementV1
 	catalogManagementClientErr error
+
+	enterpriseManagementClient    *enterprisemanagementv1.EnterpriseManagementV1
+	enterpriseManagementClientErr error
 }
 
 func (session clientSession) CatalogManagementV1() (*catalogmanagementv1.CatalogManagementV1, error) {
@@ -842,6 +851,10 @@ func (sess clientSession) IAMIdentityV1API() (*iamidentity.IamIdentityV1, error)
 // ResourceMAanger Session
 func (sess clientSession) ResourceManagerV2API() (*resourcemanager.ResourceManagerV2, error) {
 	return sess.resourceManagerAPI, sess.resourceManagerErr
+}
+
+func (session clientSession) EnterpriseManagementV1() (*enterprisemanagementv1.EnterpriseManagementV1, error) {
+	return session.enterpriseManagementClient, session.enterpriseManagementClientErr
 }
 
 // ClientSession configures and returns a fully initialized ClientSession
@@ -1643,6 +1656,19 @@ func (c *Config) ClientSession() (interface{}, error) {
 		resourceManagerClient.EnableRetries(c.RetryCount, c.RetryDelay)
 	}
 	session.resourceManagerAPI = resourceManagerClient
+
+	enterpriseManagementClientOptions := &enterprisemanagementv1.EnterpriseManagementV1Options{
+		Authenticator: authenticator,
+	}
+	// Construct the service client.
+	session.enterpriseManagementClient, err = enterprisemanagementv1.NewEnterpriseManagementV1(enterpriseManagementClientOptions)
+	if err == nil {
+		// Enable retries for API calls
+		session.enterpriseManagementClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
+
+	} else {
+		session.enterpriseManagementClientErr = fmt.Errorf("Error occurred while configuring IBM Cloud Enterprise Management API service: %q", err)
+	}
 
 	return session, nil
 }
