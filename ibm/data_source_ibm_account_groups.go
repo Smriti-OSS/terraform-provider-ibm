@@ -38,16 +38,6 @@ func dataSourceIbmAccountGroups() *schema.Resource {
 				Optional:    true,
 				Description: "The name of the account group.",
 			},
-			"rows_count": &schema.Schema{
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The number of enterprises returned from calling list account groups.",
-			},
-			"next_url": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "A string that represents the link to the next page of results.",
-			},
 			"resources": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -177,13 +167,6 @@ func dataSourceIbmAccountGroupsRead(context context.Context, d *schema.ResourceD
 	} else {
 		d.SetId(dataSourceIbmAccountGroupsID(d))
 	}
-	if err = d.Set("rows_count", listAccountGroupsResponse.RowsCount); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rows_count: %s", err))
-	}
-	if err = d.Set("next_url", listAccountGroupsResponse.NextURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting next_url: %s", err))
-	}
-
 	if listAccountGroupsResponse.Resources != nil {
 		err = d.Set("resources", dataSourceListAccountGroupsResponseFlattenResources(listAccountGroupsResponse.Resources))
 		if err != nil {

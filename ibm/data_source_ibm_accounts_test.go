@@ -38,8 +38,6 @@ func TestAccIbmAccountsDataSourceBasic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.ibm_accounts.accounts", "id"),
 					resource.TestCheckResourceAttrSet("data.ibm_accounts.accounts", "name"),
-					resource.TestCheckResourceAttrSet("data.ibm_accounts.accounts", "rows_count"),
-					resource.TestCheckResourceAttrSet("data.ibm_accounts.accounts", "next_url"),
 					resource.TestCheckResourceAttrSet("data.ibm_accounts.accounts", "resources.#"),
 					resource.TestCheckResourceAttr("data.ibm_accounts.accounts", "resources.0.parent", accountParent),
 					resource.TestCheckResourceAttr("data.ibm_accounts.accounts", "resources.0.name", accountName),

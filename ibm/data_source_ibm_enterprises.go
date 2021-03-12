@@ -38,16 +38,6 @@ func dataSourceIbmEnterprises() *schema.Resource {
 				Optional:    true,
 				Description: "The name of the enterprise.",
 			},
-			"rows_count": &schema.Schema{
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The number of enterprises returned from calling list enterprise.",
-			},
-			"next_url": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "A string that represents the link to the next page of results.",
-			},
 			"resources": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -166,12 +156,6 @@ func dataSourceIbmEnterprisesRead(context context.Context, d *schema.ResourceDat
 		d.SetId(name)
 	} else {
 		d.SetId(dataSourceIbmEnterprisesID(d))
-	}
-	if err = d.Set("rows_count", listEnterprisesResponse.RowsCount); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rows_count: %s", err))
-	}
-	if err = d.Set("next_url", listEnterprisesResponse.NextURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting next_url: %s", err))
 	}
 
 	if listEnterprisesResponse.Resources != nil {

@@ -38,8 +38,6 @@ func TestAccIbmEnterprisesDataSourceBasic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "id"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "name"),
-					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "rows_count"),
-					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "next_url"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.#"),
 					resource.TestCheckResourceAttr("data.ibm_enterprises.enterprises", "resources.0.name", enterpriseName),
 					resource.TestCheckResourceAttr("data.ibm_enterprises.enterprises", "resources.0.primary_contact_iam_id", enterprisePrimaryContactIamID),
@@ -64,8 +62,6 @@ func TestAccIbmEnterprisesDataSourceAllArgs(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "id"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "name"),
-					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "rows_count"),
-					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "next_url"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.#"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.0.url"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.0.id"),

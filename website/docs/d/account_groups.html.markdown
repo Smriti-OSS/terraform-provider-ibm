@@ -28,9 +28,6 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `id` - The unique identifier of the account_groups.
-* `rows_count` - The number of enterprises returned from calling list account groups.
-
-* `next_url` - A string that represents the link to the next page of results.
 
 * `resources` - A list of account groups. Nested `resources` blocks have the following structure:
 	* `url` - The URL of the account group.
