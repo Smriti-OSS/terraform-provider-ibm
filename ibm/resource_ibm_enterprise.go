@@ -116,28 +116,6 @@ func resourceIbmEnterpriseCreate(context context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 	createEnterpriseOptions := &enterprisemanagementv1.CreateEnterpriseOptions{}
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	accountID := userDetails.userAccount
-	userManagement, err := meta.(ClientSession).UserManagementAPI()
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	client := userManagement.UserInvite()
-	res, err := client.ListUsers(accountID)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	var iamID string
-	for _, userInfo := range res {
-		if userInfo.State == "ACTIVE" && userInfo.AccountID == accountID {
-			iamID = userInfo.IamID
-		}
-	}
-	d.Set("source_account_id", accountID)
-	d.Set("primary_contact_iam_id", iamID)
 	createEnterpriseOptions.SetSourceAccountID(d.Get("source_account_id").(string))
 	createEnterpriseOptions.SetName(d.Get("name").(string))
 	createEnterpriseOptions.SetPrimaryContactIamID(d.Get("primary_contact_iam_id").(string))
