@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,12 +35,17 @@ func resourceIbmEnterpriseAccountGroup() *schema.Resource {
 		UpdateContext: resourceIbmEnterpriseAccountGroupUpdate,
 		DeleteContext: resourceIbmEnterpriseAccountGroupDelete,
 		Importer:      &schema.ResourceImporter{},
-
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Update: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"parent": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The CRN of the parent under which the account group will be created. The parent can be an existing account group or the enterprise itself.",
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      "The CRN of the parent under which the account group will be created. The parent can be an existing account group or the enterprise itself.",
+				DiffSuppressFunc: applyOnce,
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -152,7 +158,7 @@ func resourceIbmEnterpriseAccountGroupRead(context context.Context, d *schema.Re
 		log.Printf("[DEBUG] GetAccountGroupWithContext failed %s\n%s", err, response)
 		return diag.FromErr(err)
 	}
-
+	log.Printf("[DEBUG] GetAccountGroupWithContext testing %s", response)
 	if err = d.Set("parent", accountGroup.Parent); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting parent: %s", err))
 	}
@@ -189,11 +195,15 @@ func resourceIbmEnterpriseAccountGroupRead(context context.Context, d *schema.Re
 	if err = d.Set("created_by", accountGroup.CreatedBy); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
 	}
-	if err = d.Set("updated_at", accountGroup.UpdatedAt.String()); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+	if accountGroup.UpdatedAt != nil {
+		if err = d.Set("updated_at", accountGroup.UpdatedAt.String()); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		}
 	}
-	if err = d.Set("updated_by", accountGroup.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+	if accountGroup.UpdatedBy != nil {
+		if err = d.Set("updated_by", accountGroup.UpdatedBy); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+		}
 	}
 
 	return nil
@@ -211,10 +221,10 @@ func resourceIbmEnterpriseAccountGroupUpdate(context context.Context, d *schema.
 
 	hasChange := false
 
-	//if d.HasChange("parent") {
-	//	updateAccountGroupOptions.SetParent(d.Get("parent").(string))
-	//	hasChange = true
-	//}
+	// 	if d.HasChange("parent") {
+	// 		updateAccountGroupOptions.SetParent(d.Get("parent").(string))
+	// 		hasChange = true
+	// 	}
 	if d.HasChange("name") {
 		updateAccountGroupOptions.SetName(d.Get("name").(string))
 		hasChange = true

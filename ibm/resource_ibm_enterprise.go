@@ -19,10 +19,10 @@ package ibm
 import (
 	"context"
 	"fmt"
-	"log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"log"
+	"time"
 
 	"github.com/IBM/platform-services-go-sdk/enterprisemanagementv1"
 )
@@ -34,12 +34,17 @@ func resourceIbmEnterprise() *schema.Resource {
 		UpdateContext: resourceIbmEnterpriseUpdate,
 		DeleteContext: resourceIbmEnterpriseDelete,
 		Importer:      &schema.ResourceImporter{},
-
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Update: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"source_account_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The ID of the account that is used to create the enterprise.",
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      "The ID of the account that is used to create the enterprise.",
+				DiffSuppressFunc: applyOnce,
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -110,24 +115,41 @@ func resourceIbmEnterpriseCreate(context context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	createEnterpriseOptions := &enterprisemanagementv1.CreateEnterpriseOptions{}
-
+	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	accountID := userDetails.userAccount
+	userManagement, err := meta.(ClientSession).UserManagementAPI()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	client := userManagement.UserInvite()
+	res, err := client.ListUsers(accountID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	var iamID string
+	for _, userInfo := range res {
+		if userInfo.State == "ACTIVE" && userInfo.AccountID == accountID {
+			iamID = userInfo.IamID
+		}
+	}
+	d.Set("source_account_id", accountID)
+	d.Set("primary_contact_iam_id", iamID)
 	createEnterpriseOptions.SetSourceAccountID(d.Get("source_account_id").(string))
 	createEnterpriseOptions.SetName(d.Get("name").(string))
 	createEnterpriseOptions.SetPrimaryContactIamID(d.Get("primary_contact_iam_id").(string))
 	if _, ok := d.GetOk("domain"); ok {
 		createEnterpriseOptions.SetDomain(d.Get("domain").(string))
 	}
-
 	createEnterpriseResponse, response, err := enterpriseManagementClient.CreateEnterpriseWithContext(context, createEnterpriseOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateEnterpriseWithContext failed %s\n%s", err, response)
 		return diag.FromErr(err)
 	}
-
 	d.SetId(*createEnterpriseResponse.EnterpriseID)
-
 	return resourceIbmEnterpriseRead(context, d, meta)
 }
 
