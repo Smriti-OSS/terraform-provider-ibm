@@ -1,3 +1,11 @@
+terraform {
+  required_providers {
+    ibm = {
+      source = "registry.terraform.io/ibm-cloud/ibm"
+    }
+  }
+}
+
 provider "ibm" {
   ibmcloud_api_key = var.ibmcloud_api_key
 }
@@ -37,4 +45,9 @@ data "ibm_account_groups" "account_groups_instance" {
 // Create accounts data source
 data "ibm_accounts" "accounts_instance" {
   name = var.accounts_name
+}
+
+//Get iam_id and source_account_id creating enterprise
+data "ibm_iam_users" "current_account_users"{
+ email = var.account_email
 }
