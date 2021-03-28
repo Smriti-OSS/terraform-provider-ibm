@@ -157,7 +157,8 @@ func dataSourceIbmAccountsRead(context context.Context, d *schema.ResourceData, 
 				log.Printf("[DEBUG] Error while parsing %s\n%v", *listAccountsResponse.NextURL, err)
 				return diag.FromErr(err)
 			}
-			listAccountsOptions.Next_docid = &next_docid
+			/* Uncomment after sdk updated */
+			//listAccountsOptions.Next_docid = &next_docid
 			log.Printf("[DEBUG] ListAccountsWithContext failed %s", next_docid)
 		} else {
 			next_docid = ""
