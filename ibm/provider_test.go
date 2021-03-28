@@ -497,6 +497,12 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
+func testAccPreCheckEnterprise(t *testing.T) {
+	if v := os.Getenv("IC_API_KEY"); v == "" {
+		t.Fatal("IC_API_KEY must be set for acceptance tests")
+	}
+
+}
 func testAccPreCheckCis(t *testing.T) {
 	testAccPreCheck(t)
 	if cisInstance == "" {
