@@ -188,7 +188,7 @@ func testAccCheckFunctionRuleExists(n string, obj *whisk.Rule) resource.TestChec
 			return err
 		}
 
-		wskClient, err := setupOpenWhiskClientConfig(namespace, bxSession.Config, functionNamespaceAPI)
+		wskClient, err := setupOpenWhiskClientConfig(namespace, bxSession, functionNamespaceAPI)
 		if err != nil {
 			return err
 
@@ -227,7 +227,7 @@ func testAccCheckFunctionRuleDestroy(s *terraform.State) error {
 		namespace := parts[0]
 		name := parts[1]
 
-		client, err := setupOpenWhiskClientConfig(namespace, bxSession.Config, functionNamespaceAPI)
+		client, err := setupOpenWhiskClientConfig(namespace, bxSession, functionNamespaceAPI)
 		if err != nil && strings.Contains(err.Error(), "is not in the list of entitled namespaces") {
 			return nil
 		}
@@ -249,7 +249,7 @@ func testAccCheckFunctionRuleDestroy(s *terraform.State) error {
 func testAccCheckIAMFunctionRuleCreate(actionName, triggerName, name, namespace string) string {
 	return fmt.Sprintf(`
 	data "ibm_resource_group" "test_acc" {
-		name = "default"
+		is_default=true
 	}
 
 	resource "ibm_function_namespace" "namespace" {
@@ -310,7 +310,7 @@ func testAccCheckIAMFunctionRuleCreate(actionName, triggerName, name, namespace 
 func testAccCheckIAMFunctionRuleUpdate(updatedTriggerName, name, namespace string) string {
 	return fmt.Sprintf(`
 	data "ibm_resource_group" "test_acc" {
-		name = "default"
+		is_default=true
 	}
 
 	resource "ibm_function_namespace" "namespace" {
@@ -346,7 +346,7 @@ func testAccCheckIAMFunctionRuleUpdate(updatedTriggerName, name, namespace strin
 func testAccCheckIAMFunctionRuleImport(triggerName, name, namespace string) string {
 	return fmt.Sprintf(`
 	data "ibm_resource_group" "test_acc" {
-		name = "default"
+		is_default=true
 	}
 
 	resource "ibm_function_namespace" "namespace" {
