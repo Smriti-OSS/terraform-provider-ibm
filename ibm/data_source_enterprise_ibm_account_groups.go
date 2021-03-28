@@ -140,30 +140,13 @@ func dataSourceIbmAccountGroupsRead(context context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	next_docid := ""
-	var allRecs []enterprisemanagementv1.AccountGroup
-	for {
-		listAccountGroupsOptions := &enterprisemanagementv1.ListAccountGroupsOptions{}
-		listAccountGroupsResponse, response, err := enterpriseManagementClient.ListAccountGroupsWithContext(context, listAccountGroupsOptions)
-		if err != nil {
-			log.Printf("[DEBUG] ListAccountGroupsWithContext failed %s\n%s", err, response)
-			return diag.FromErr(err)
-		}
-		allRecs = append(allRecs, listAccountGroupsResponse.Resources...)
-		if listAccountGroupsResponse.NextURL != nil {
-			next_docid, err = getEnterpriseNext(listAccountGroupsResponse.NextURL)
-			if err != nil {
-				log.Printf("[DEBUG] Error while parsing %s\n%v", *listAccountGroupsResponse.NextURL, err)
-				return diag.FromErr(err)
-			}
-			/*Uncomment after sdk updated */
-			//listAccountGroupsOptions.Next_docid = &next_docid
-			log.Printf("[DEBUG] ListAccountsWithContext failed %s", next_docid)
-		} else {
-			next_docid = ""
-			break
-		}
+	listAccountGroupsOptions := &enterprisemanagementv1.ListAccountGroupsOptions{}
+	listAccountGroupsResponse, response, err := enterpriseManagementClient.ListAccountGroupsWithContext(context, listAccountGroupsOptions)
+	if err != nil {
+		log.Printf("[DEBUG] ListAccountGroupsWithContext failed %s\n%s", err, response)
+		return diag.FromErr(err)
 	}
+
 	// Use the provided filter argument and construct a new list with only the requested resource(s)
 	var matchResources []enterprisemanagementv1.AccountGroup
 	var name string
@@ -171,17 +154,17 @@ func dataSourceIbmAccountGroupsRead(context context.Context, d *schema.ResourceD
 	if v, ok := d.GetOk("name"); ok {
 		name = v.(string)
 		suppliedFilter = true
-		for _, data := range allRecs {
+		for _, data := range listAccountGroupsResponse.Resources {
 			if *data.Name == name {
 				matchResources = append(matchResources, data)
 			}
 		}
 	} else {
-		matchResources = allRecs
+		matchResources = listAccountGroupsResponse.Resources
 	}
-	allRecs = matchResources
+	listAccountGroupsResponse.Resources = matchResources
 
-	if len(allRecs) == 0 {
+	if len(listAccountGroupsResponse.Resources) == 0 {
 		return diag.FromErr(fmt.Errorf("no Resources found with name %s\nIf not specified, please specify more filters", name))
 	}
 
@@ -190,8 +173,8 @@ func dataSourceIbmAccountGroupsRead(context context.Context, d *schema.ResourceD
 	} else {
 		d.SetId(dataSourceIbmAccountGroupsID(d))
 	}
-	if allRecs != nil {
-		err = d.Set("resources", dataSourceListAccountGroupsResponseFlattenResources(allRecs))
+	if listAccountGroupsResponse.Resources != nil {
+		err = d.Set("resources", dataSourceListAccountGroupsResponseFlattenResources(listAccountGroupsResponse.Resources))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("Error setting resources %s", err))
 		}
