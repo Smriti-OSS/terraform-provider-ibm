@@ -25,22 +25,21 @@ import (
 )
 
 func TestAccIbmEnterprisesDataSourceBasic(t *testing.T) {
-	enterpriseSourceAccountID := fmt.Sprintf("source_account_id_%d", acctest.RandIntRange(10, 100))
-	enterpriseName := fmt.Sprintf("name_%d", acctest.RandIntRange(10, 100))
-	enterprisePrimaryContactIamID := fmt.Sprintf("primary_contact_iam_id_%d", acctest.RandIntRange(10, 100))
+	//enterpriseSourceAccountID := fmt.Sprintf("source_account_id_%d", acctest.RandIntRange(10, 100))
+	enterpriseName := fmt.Sprintf("enterprise_name_%d", acctest.RandIntRange(10, 100))
+	//enterprisePrimaryContactIamID := fmt.Sprintf("primary_contact_iam_id_%d", acctest.RandIntRange(10, 100))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck:  func() { testAccPreCheckEnterprise(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckIbmEnterprisesDataSourceConfigBasic(enterpriseSourceAccountID, enterpriseName, enterprisePrimaryContactIamID),
+				Config: testAccCheckIbmEnterprisesDataSourceConfigBasic(enterpriseName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "id"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "name"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.#"),
 					resource.TestCheckResourceAttr("data.ibm_enterprises.enterprises", "resources.0.name", enterpriseName),
-					resource.TestCheckResourceAttr("data.ibm_enterprises.enterprises", "resources.0.primary_contact_iam_id", enterprisePrimaryContactIamID),
 				),
 			},
 		},
@@ -48,17 +47,17 @@ func TestAccIbmEnterprisesDataSourceBasic(t *testing.T) {
 }
 
 func TestAccIbmEnterprisesDataSourceAllArgs(t *testing.T) {
-	enterpriseSourceAccountID := fmt.Sprintf("source_account_id_%d", acctest.RandIntRange(10, 100))
-	enterpriseName := fmt.Sprintf("name_%d", acctest.RandIntRange(10, 100))
-	enterprisePrimaryContactIamID := fmt.Sprintf("primary_contact_iam_id_%d", acctest.RandIntRange(10, 100))
-	enterpriseDomain := fmt.Sprintf("domain_%d", acctest.RandIntRange(10, 100))
+	//enterpriseSourceAccountID := fmt.Sprintf("source_account_id_%d", acctest.RandIntRange(10, 100))
+	enterpriseName := fmt.Sprintf("enterprise_name_%d", acctest.RandIntRange(10, 100))
+	//enterprisePrimaryContactIamID := fmt.Sprintf("primary_contact_iam_id_%d", acctest.RandIntRange(10, 100))
+	enterpriseDomain := fmt.Sprintf("enterprise_domain_%d", acctest.RandIntRange(10, 100))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck:  func() { testAccPreCheckEnterprise(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckIbmEnterprisesDataSourceConfig(enterpriseSourceAccountID, enterpriseName, enterprisePrimaryContactIamID, enterpriseDomain),
+				Config: testAccCheckIbmEnterprisesDataSourceConfig(enterpriseName, enterpriseDomain),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "id"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "name"),
@@ -70,43 +69,44 @@ func TestAccIbmEnterprisesDataSourceAllArgs(t *testing.T) {
 					resource.TestCheckResourceAttr("data.ibm_enterprises.enterprises", "resources.0.name", enterpriseName),
 					resource.TestCheckResourceAttr("data.ibm_enterprises.enterprises", "resources.0.domain", enterpriseDomain),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.0.state"),
-					resource.TestCheckResourceAttr("data.ibm_enterprises.enterprises", "resources.0.primary_contact_iam_id", enterprisePrimaryContactIamID),
+					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.0.primary_contact_iam_id"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.0.primary_contact_email"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.0.created_at"),
 					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.0.created_by"),
-					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.0.updated_at"),
-					resource.TestCheckResourceAttrSet("data.ibm_enterprises.enterprises", "resources.0.updated_by"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckIbmEnterprisesDataSourceConfigBasic(enterpriseSourceAccountID string, enterpriseName string, enterprisePrimaryContactIamID string) string {
+func testAccCheckIbmEnterprisesDataSourceConfigBasic(enterpriseName string) string {
 	return fmt.Sprintf(`
+		data "ibm_iam_users" "current_account_users"{
+		}
 		resource "ibm_enterprise" "enterprise" {
-			source_account_id = "%s"
+			source_account_id = data.ibm_iam_users.current_account_users.users[0].account_id
 			name = "%s"
-			primary_contact_iam_id = "%s"
+			primary_contact_iam_id = data.ibm_iam_users.current_account_users.users[0].iam_id
 		}
 
 		data "ibm_enterprises" "enterprises" {
 			name = ibm_enterprise.enterprise.name
 		}
-	`, enterpriseSourceAccountID, enterpriseName, enterprisePrimaryContactIamID)
+	`, enterpriseName)
 }
 
-func testAccCheckIbmEnterprisesDataSourceConfig(enterpriseSourceAccountID string, enterpriseName string, enterprisePrimaryContactIamID string, enterpriseDomain string) string {
+func testAccCheckIbmEnterprisesDataSourceConfig(enterpriseName string, enterpriseDomain string) string {
 	return fmt.Sprintf(`
+		data "ibm_iam_users" "current_account_users"{
+		}
 		resource "ibm_enterprise" "enterprise" {
-			source_account_id = "%s"
+			source_account_id = data.ibm_iam_users.current_account_users.users[0].account_id
 			name = "%s"
-			primary_contact_iam_id = "%s"
+			primary_contact_iam_id = data.ibm_iam_users.current_account_users.users[0].iam_id
 			domain = "%s"
 		}
-
 		data "ibm_enterprises" "enterprises" {
 			name = ibm_enterprise.enterprise.name
 		}
-	`, enterpriseSourceAccountID, enterpriseName, enterprisePrimaryContactIamID, enterpriseDomain)
+	`, enterpriseName, enterpriseDomain)
 }

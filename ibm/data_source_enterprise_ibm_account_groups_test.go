@@ -25,39 +25,38 @@ import (
 )
 
 func TestAccIbmAccountGroupsDataSourceBasic(t *testing.T) {
-	accountGroupParent := fmt.Sprintf("parent_%d", acctest.RandIntRange(10, 100))
+	//accountGroupParent := fmt.Sprintf("parent_%d", acctest.RandIntRange(10, 100))
 	accountGroupName := fmt.Sprintf("name_%d", acctest.RandIntRange(10, 100))
-	accountGroupPrimaryContactIamID := fmt.Sprintf("primary_contact_iam_id_%d", acctest.RandIntRange(10, 100))
+	//accountGroupPrimaryContactIamID := fmt.Sprintf("primary_contact_iam_id_%d", acctest.RandIntRange(10, 100))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck:  func() { testAccPreCheckEnterprise(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckIbmAccountGroupsDataSourceConfigBasic(accountGroupParent, accountGroupName, accountGroupPrimaryContactIamID),
+				Config: testAccCheckIbmAccountGroupsDataSourceConfigBasic(accountGroupName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.ibm_account_groups.account_groups", "id"),
 					resource.TestCheckResourceAttrSet("data.ibm_account_groups.account_groups", "name"),
 					resource.TestCheckResourceAttrSet("data.ibm_account_groups.account_groups", "resources.#"),
-					resource.TestCheckResourceAttr("data.ibm_account_groups.account_groups", "resources.0.parent", accountGroupParent),
 					resource.TestCheckResourceAttr("data.ibm_account_groups.account_groups", "resources.0.name", accountGroupName),
-					resource.TestCheckResourceAttr("data.ibm_account_groups.account_groups", "resources.0.primary_contact_iam_id", accountGroupPrimaryContactIamID),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckIbmAccountGroupsDataSourceConfigBasic(accountGroupParent string, accountGroupName string, accountGroupPrimaryContactIamID string) string {
+func testAccCheckIbmAccountGroupsDataSourceConfigBasic(accountGroupName string) string {
 	return fmt.Sprintf(`
-		resource "ibm_enterprise_account_group" "enterprise_account_group" {
-			parent = "%s"
-			name = "%s"
-			primary_contact_iam_id = "%s"
+		data "ibm_enterprises" "enterprises_instance" {
 		}
-
+		resource "ibm_enterprise_account_group" "enterprise_account_group" {
+			parent = data.ibm_enterprises.enterprises_instance.resources[0].crn
+			name = "%s"
+			primary_contact_iam_id = data.ibm_enterprises.enterprises_instance.resources[0].primary_contact_iam_id
+		}
 		data "ibm_account_groups" "account_groups" {
 			name = ibm_enterprise_account_group.enterprise_account_group.name
 		}
-	`, accountGroupParent, accountGroupName, accountGroupPrimaryContactIamID)
+	`, accountGroupName)
 }

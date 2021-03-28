@@ -29,33 +29,30 @@ import (
 
 func TestAccIbmEnterpriseAccountBasic(t *testing.T) {
 	var conf enterprisemanagementv1.Account
-	parent := fmt.Sprintf("parent_%d", acctest.RandIntRange(10, 100))
-	name := fmt.Sprintf("name_%d", acctest.RandIntRange(10, 100))
-	ownerIamID := fmt.Sprintf("owner_iam_id_%d", acctest.RandIntRange(10, 100))
-	parentUpdate := fmt.Sprintf("parent_%d", acctest.RandIntRange(10, 100))
-	nameUpdate := fmt.Sprintf("name_%d", acctest.RandIntRange(10, 100))
-	ownerIamIDUpdate := fmt.Sprintf("owner_iam_id_%d", acctest.RandIntRange(10, 100))
+	//parent := fmt.Sprintf("parent_%d", acctest.RandIntRange(10, 100))
+	name := fmt.Sprintf("tf-gen-account-name_%d", acctest.RandIntRange(10, 100))
+	//ownerIamID := fmt.Sprintf("owner_iam_id_%d", acctest.RandIntRange(10, 100))
+	//parentUpdate := fmt.Sprintf("parent_%d", acctest.RandIntRange(10, 100))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckIbmEnterpriseAccountDestroy,
+		PreCheck:  func() { testAccPreCheckEnterprise(t) },
+		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckIbmEnterpriseAccountConfigBasic(parent, name, ownerIamID),
+				Config: testAccCheckIbmEnterpriseAccountConfigBasic(name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckIbmEnterpriseAccountExists("ibm_enterprise_account.enterprise_account", conf),
-					resource.TestCheckResourceAttr("ibm_enterprise_account.enterprise_account", "parent", parent),
+					resource.TestCheckResourceAttrSet("ibm_enterprise_account.enterprise_account", "parent"),
 					resource.TestCheckResourceAttr("ibm_enterprise_account.enterprise_account", "name", name),
-					resource.TestCheckResourceAttr("ibm_enterprise_account.enterprise_account", "owner_iam_id", ownerIamID),
+					resource.TestCheckResourceAttrSet("ibm_enterprise_account.enterprise_account", "owner_iam_id"),
 				),
 			},
 			resource.TestStep{
-				Config: testAccCheckIbmEnterpriseAccountConfigBasic(parentUpdate, nameUpdate, ownerIamIDUpdate),
+				Config: testAccCheckIbmEnterpriseAccountConfigUpdateBasic(name),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("ibm_enterprise_account.enterprise_account", "parent", parentUpdate),
-					resource.TestCheckResourceAttr("ibm_enterprise_account.enterprise_account", "name", nameUpdate),
-					resource.TestCheckResourceAttr("ibm_enterprise_account.enterprise_account", "owner_iam_id", ownerIamIDUpdate),
+					resource.TestCheckResourceAttrSet("ibm_enterprise_account.enterprise_account", "parent"),
+					resource.TestCheckResourceAttrSet("ibm_enterprise_account.enterprise_account", "name"),
+					resource.TestCheckResourceAttrSet("ibm_enterprise_account.enterprise_account", "owner_iam_id"),
 				),
 			},
 			resource.TestStep{
@@ -67,17 +64,31 @@ func TestAccIbmEnterpriseAccountBasic(t *testing.T) {
 	})
 }
 
-func testAccCheckIbmEnterpriseAccountConfigBasic(parent string, name string, ownerIamID string) string {
+func testAccCheckIbmEnterpriseAccountConfigBasic(name string) string {
 	return fmt.Sprintf(`
-
-		resource "ibm_enterprise_account" "enterprise_account" {
-			parent = "%s"
-			name = "%s"
-			owner_iam_id = "%s"
+		data "ibm_enterprises" "enterprises_instance" {
 		}
-	`, parent, name, ownerIamID)
+		resource "ibm_enterprise_account" "enterprise_account" {
+			parent = data.ibm_enterprises.enterprises_instance.resources[0].crn
+			name = "%s"
+			owner_iam_id = data.ibm_enterprises.enterprises_instance.resources[0].primary_contact_iam_id
+		}
+	`, name)
 }
 
+func testAccCheckIbmEnterpriseAccountConfigUpdateBasic(name string) string {
+	return fmt.Sprintf(`
+		data "ibm_enterprises" "enterprises_instance" {
+		}
+		data "ibm_account_groups" "account_groups_instance" {
+		}
+		resource "ibm_enterprise_account" "enterprise_account" {
+			parent = data.ibm_account_groups.account_groups_instance.resources[0].crn
+			name = "%s"
+			owner_iam_id = data.ibm_enterprises.enterprises_instance.resources[0].primary_contact_iam_id
+		}
+	`, name)
+}
 func testAccCheckIbmEnterpriseAccountExists(n string, obj enterprisemanagementv1.Account) resource.TestCheckFunc {
 
 	return func(s *terraform.State) error {
@@ -103,31 +114,4 @@ func testAccCheckIbmEnterpriseAccountExists(n string, obj enterprisemanagementv1
 		obj = *account
 		return nil
 	}
-}
-
-func testAccCheckIbmEnterpriseAccountDestroy(s *terraform.State) error {
-	enterpriseManagementClient, err := testAccProvider.Meta().(ClientSession).EnterpriseManagementV1()
-	if err != nil {
-		return err
-	}
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "ibm_enterprise_account" {
-			continue
-		}
-
-		getAccountOptions := &enterprisemanagementv1.GetAccountOptions{}
-
-		getAccountOptions.SetAccountID(rs.Primary.ID)
-
-		// Try to find the key
-		_, response, err := enterpriseManagementClient.GetAccount(getAccountOptions)
-
-		if err == nil {
-			return fmt.Errorf("enterprise_account still exists: %s", rs.Primary.ID)
-		} else if response.StatusCode != 404 {
-			return fmt.Errorf("Error checking for enterprise_account (%s) has been destroyed: %s", rs.Primary.ID, err)
-		}
-	}
-
-	return nil
 }

@@ -25,39 +25,40 @@ import (
 )
 
 func TestAccIbmAccountsDataSourceBasic(t *testing.T) {
-	accountParent := fmt.Sprintf("parent_%d", acctest.RandIntRange(10, 100))
+	//accountParent := fmt.Sprintf("parent_%d", acctest.RandIntRange(10, 100))
 	accountName := fmt.Sprintf("name_%d", acctest.RandIntRange(10, 100))
-	accountOwnerIamID := fmt.Sprintf("owner_iam_id_%d", acctest.RandIntRange(10, 100))
-
+	//accountOwnerIamID := fmt.Sprintf("owner_iam_id_%d", acctest.RandIntRange(10, 100))
+	t.Log("reached in test")
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck:  func() { testAccPreCheckEnterprise(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckIbmAccountsDataSourceConfigBasic(accountParent, accountName, accountOwnerIamID),
+				Config: testAccCheckIbmAccountsDataSourceConfigBasic(accountName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.ibm_accounts.accounts", "id"),
 					resource.TestCheckResourceAttrSet("data.ibm_accounts.accounts", "name"),
 					resource.TestCheckResourceAttrSet("data.ibm_accounts.accounts", "resources.#"),
-					resource.TestCheckResourceAttr("data.ibm_accounts.accounts", "resources.0.parent", accountParent),
 					resource.TestCheckResourceAttr("data.ibm_accounts.accounts", "resources.0.name", accountName),
-					resource.TestCheckResourceAttr("data.ibm_accounts.accounts", "resources.0.owner_iam_id", accountOwnerIamID),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckIbmAccountsDataSourceConfigBasic(accountParent string, accountName string, accountOwnerIamID string) string {
+func testAccCheckIbmAccountsDataSourceConfigBasic(accountName string) string {
+
 	return fmt.Sprintf(`
+		data "ibm_enterprises" "enterprises_instance" {
+		}
 		resource "ibm_enterprise_account" "enterprise_account" {
-			parent = "%s"
+			parent = data.ibm_enterprises.enterprises_instance.resources[0].crn
 			name = "%s"
-			owner_iam_id = "%s"
+			owner_iam_id = data.ibm_enterprises.enterprises_instance.resources[0].primary_contact_iam_id
 		}
 
 		data "ibm_accounts" "accounts" {
 			name = ibm_enterprise_account.enterprise_account.name
 		}
-	`, accountParent, accountName, accountOwnerIamID)
+	`, accountName)
 }

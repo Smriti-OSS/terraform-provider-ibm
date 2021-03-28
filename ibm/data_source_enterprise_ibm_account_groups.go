@@ -19,11 +19,11 @@ package ibm
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"log"
+	"net/url"
+	"time"
 
 	"github.com/IBM/platform-services-go-sdk/enterprisemanagementv1"
 )
@@ -126,39 +126,61 @@ func dataSourceIbmAccountGroups() *schema.Resource {
 	}
 }
 
+func getEnterpriseNext(next *string) (string, error) {
+	u, err := url.Parse(*next)
+	if err != nil {
+		return "", err
+	}
+	q := u.Query()
+	return q.Get("next_docid"), nil
+}
+
 func dataSourceIbmAccountGroupsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enterpriseManagementClient, err := meta.(ClientSession).EnterpriseManagementV1()
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	listAccountGroupsOptions := &enterprisemanagementv1.ListAccountGroupsOptions{}
-
-	listAccountGroupsResponse, response, err := enterpriseManagementClient.ListAccountGroupsWithContext(context, listAccountGroupsOptions)
-	if err != nil {
-		log.Printf("[DEBUG] ListAccountGroupsWithContext failed %s\n%s", err, response)
-		return diag.FromErr(err)
+	next_docid := ""
+	var allRecs []enterprisemanagementv1.AccountGroup
+	for {
+		listAccountGroupsOptions := &enterprisemanagementv1.ListAccountGroupsOptions{}
+		listAccountGroupsResponse, response, err := enterpriseManagementClient.ListAccountGroupsWithContext(context, listAccountGroupsOptions)
+		if err != nil {
+			log.Printf("[DEBUG] ListAccountGroupsWithContext failed %s\n%s", err, response)
+			return diag.FromErr(err)
+		}
+		allRecs = append(allRecs, listAccountGroupsResponse.Resources...)
+		if listAccountGroupsResponse.NextURL != nil {
+			next_docid, err = getEnterpriseNext(listAccountGroupsResponse.NextURL)
+			if err != nil {
+				log.Printf("[DEBUG] Error while parsing %s\n%v", *listAccountGroupsResponse.NextURL, err)
+				return diag.FromErr(err)
+			}
+			listAccountGroupsOptions.Next_docid = &next_docid
+			log.Printf("[DEBUG] ListAccountsWithContext failed %s", next_docid)
+		} else {
+			next_docid = ""
+			break
+		}
 	}
-
 	// Use the provided filter argument and construct a new list with only the requested resource(s)
 	var matchResources []enterprisemanagementv1.AccountGroup
 	var name string
 	var suppliedFilter bool
-
 	if v, ok := d.GetOk("name"); ok {
 		name = v.(string)
 		suppliedFilter = true
-		for _, data := range listAccountGroupsResponse.Resources {
+		for _, data := range allRecs {
 			if *data.Name == name {
 				matchResources = append(matchResources, data)
 			}
 		}
 	} else {
-		matchResources = listAccountGroupsResponse.Resources
+		matchResources = allRecs
 	}
-	listAccountGroupsResponse.Resources = matchResources
+	allRecs = matchResources
 
-	if len(listAccountGroupsResponse.Resources) == 0 {
+	if len(allRecs) == 0 {
 		return diag.FromErr(fmt.Errorf("no Resources found with name %s\nIf not specified, please specify more filters", name))
 	}
 
@@ -167,8 +189,8 @@ func dataSourceIbmAccountGroupsRead(context context.Context, d *schema.ResourceD
 	} else {
 		d.SetId(dataSourceIbmAccountGroupsID(d))
 	}
-	if listAccountGroupsResponse.Resources != nil {
-		err = d.Set("resources", dataSourceListAccountGroupsResponseFlattenResources(listAccountGroupsResponse.Resources))
+	if allRecs != nil {
+		err = d.Set("resources", dataSourceListAccountGroupsResponseFlattenResources(allRecs))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("Error setting resources %s", err))
 		}

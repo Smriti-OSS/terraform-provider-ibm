@@ -1659,17 +1659,15 @@ func (c *Config) ClientSession() (interface{}, error) {
 
 	enterpriseManagementClientOptions := &enterprisemanagementv1.EnterpriseManagementV1Options{
 		Authenticator: authenticator,
+		URL:           envFallBack([]string{"IBMCLOUD_ENTERPRISE_API_ENDPOINT"}, "https://enterprise.cloud.ibm.com/v1"),
 	}
-	// Construct the service client.
-	session.enterpriseManagementClient, err = enterprisemanagementv1.NewEnterpriseManagementV1(enterpriseManagementClientOptions)
+	enterpriseManagementClient, err := enterprisemanagementv1.NewEnterpriseManagementV1(enterpriseManagementClientOptions)
 	if err == nil {
-		// Enable retries for API calls
-		session.enterpriseManagementClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
-
+		enterpriseManagementClient.EnableRetries(c.RetryCount, c.RetryDelay)
 	} else {
 		session.enterpriseManagementClientErr = fmt.Errorf("Error occurred while configuring IBM Cloud Enterprise Management API service: %q", err)
 	}
-
+	session.enterpriseManagementClient = enterpriseManagementClient
 	return session, nil
 }
 
