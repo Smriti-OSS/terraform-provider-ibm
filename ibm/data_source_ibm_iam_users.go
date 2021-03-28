@@ -126,6 +126,7 @@ func dataSourceIBMIAMUsersRead(d *schema.ResourceData, meta interface{}) error {
 				"alt_phonenumber": userInfo.Altphonenumber,
 				"account_id":      userInfo.AccountID,
 			}
+
 			profileList = append(profileList, user)
 		}
 	}
