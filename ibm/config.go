@@ -92,7 +92,6 @@ import (
 	bxsession "github.com/IBM-Cloud/bluemix-go/session"
 	ibmpisession "github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM-Cloud/terraform-provider-ibm/version"
-	"github.com/IBM/platform-services-go-sdk/catalogmanagementv1"
 	"github.com/IBM/platform-services-go-sdk/enterprisemanagementv1"
 
 )
