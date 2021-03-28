@@ -12,6 +12,7 @@ func dataSourceIBMIAMUsers() *schema.Resource {
 		Read: dataSourceIBMIAMUsersRead,
 
 		Schema: map[string]*schema.Schema{
+
 			"users": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -109,20 +110,24 @@ func dataSourceIBMIAMUsersRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	profileList := make([]interface{}, 0)
+
 	for _, userInfo := range res {
-		user := map[string]interface{}{
-			"iam_id":          userInfo.IamID,
-			"user_id":         userInfo.UserID,
-			"realm":           userInfo.Realm,
-			"first_name":      userInfo.Firstname,
-			"last_name":       userInfo.Lastname,
-			"state":           userInfo.State,
-			"email":           userInfo.Email,
-			"phonenumber":     userInfo.Phonenumber,
-			"alt_phonenumber": userInfo.Altphonenumber,
-			"account_id":      userInfo.AccountID,
+		if userInfo.State == "ACTIVE" {
+
+			user := map[string]interface{}{
+				"iam_id":          userInfo.IamID,
+				"user_id":         userInfo.UserID,
+				"realm":           userInfo.Realm,
+				"first_name":      userInfo.Firstname,
+				"last_name":       userInfo.Lastname,
+				"state":           userInfo.State,
+				"email":           userInfo.Email,
+				"phonenumber":     userInfo.Phonenumber,
+				"alt_phonenumber": userInfo.Altphonenumber,
+				"account_id":      userInfo.AccountID,
+			}
+			profileList = append(profileList, user)
 		}
-		profileList = append(profileList, user)
 	}
 
 	d.SetId(accountID)
