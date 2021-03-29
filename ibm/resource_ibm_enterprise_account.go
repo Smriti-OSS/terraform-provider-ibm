@@ -80,6 +80,11 @@ func resourceIbmEnterpriseAccount() *schema.Resource {
 				Computed:    true,
 				Description: "The enterprise ID that the account is a part of.",
 			},
+			"account_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The source account id of account to be imported",
+			},
 			"enterprise_path": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -130,7 +135,7 @@ func resourceIbmEnterpriseAccount() *schema.Resource {
 }
 
 func checkImportAccount(d *schema.ResourceData) bool {
-	_, validateEnterpriseAccountId := d.GetOk("enterprise_account_id")
+	_, validateEnterpriseAccountId := d.GetOk("account_id")
 	_, validateEnterpriseId := d.GetOk("enterprise_id")
 	if validateEnterpriseAccountId && validateEnterpriseId {
 		return true
@@ -157,12 +162,13 @@ func resourceIbmEnterpriseAccountCreate(context context.Context, d *schema.Resou
 	if checkImportAccount(d) {
 		importAccountToEnterpriseOptions := &enterprisemanagementv1.ImportAccountToEnterpriseOptions{}
 		importAccountToEnterpriseOptions.SetEnterpriseID(d.Get("enterprise_id").(string))
-		importAccountToEnterpriseOptions.SetAccountID(d.Get("enterprise_account_id").(string))
+		importAccountToEnterpriseOptions.SetAccountID(d.Get("account_id").(string))
 		response, err := enterpriseManagementClient.ImportAccountToEnterpriseWithContext(context, importAccountToEnterpriseOptions)
 		if err != nil {
 			log.Printf("[DEBUG] ImportAccountToEnterpriseWithContext failed %s\n%s", err, response)
 			return diag.FromErr(err)
 		}
+		d.SetId(d.Get("account_id").(string))
 	} else if checkCreateAccount(d) {
 		createAccountOptions := &enterprisemanagementv1.CreateAccountOptions{}
 		createAccountOptions.SetParent(d.Get("parent").(string))
