@@ -33,6 +33,7 @@ The following arguments are supported:
 * `catalog_id` - (Required, string) Catalog ID this instance was created from.
 * `offering_id` - (Required, string) Offering ID this instance was created from.
 * `kind_format` - (Required, string) the format this instance has (helm, operator, ova...).
+  **NOTE**: currently the only supported format is `operator`
 * `version` - (Required, string) The version this instance was installed from (not version id).
 * `cluster_id` - (Required, string) Cluster ID.
 * `cluster_region` - (Required, string) Cluster region (e.g., us-south).
@@ -41,7 +42,7 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-The following attributes are exported:
+In addition to all arguments above, the following attributes are exported:
 
 * `id` - The unique identifier of the cm_offering_instance.
 * `url` - Url reference to this object.

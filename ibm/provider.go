@@ -225,6 +225,7 @@ func Provider() *schema.Provider {
 			"ibm_dns_secondary":                      dataSourceIBMDNSSecondary(),
 			"ibm_event_streams_topic":                dataSourceIBMEventStreamsTopic(),
 			"ibm_iam_access_group":                   dataSourceIBMIAMAccessGroup(),
+			"ibm_iam_account_settings":               dataSourceIBMIAMAccountSettings(),
 			"ibm_iam_auth_token":                     dataSourceIBMIAMAuthToken(),
 			"ibm_iam_role_actions":                   datasourceIBMIAMRoleAction(),
 			"ibm_iam_users":                          dataSourceIBMIAMUsers(),
@@ -442,6 +443,7 @@ func Provider() *schema.Provider {
 			"ibm_firewall":                                       resourceIBMFirewall(),
 			"ibm_firewall_policy":                                resourceIBMFirewallPolicy(),
 			"ibm_iam_access_group":                               resourceIBMIAMAccessGroup(),
+			"ibm_iam_account_settings":                           resourceIbmIamAccountSettings(),
 			"ibm_iam_custom_role":                                resourceIBMIAMCustomRole(),
 			"ibm_iam_access_group_dynamic_rule":                  resourceIBMIAMDynamicRule(),
 			"ibm_iam_access_group_members":                       resourceIBMIAMAccessGroupMembers(),
@@ -596,6 +598,7 @@ func Validator() ValidatorDict {
 	initOnce.Do(func() {
 		globalValidatorDict = ValidatorDict{
 			ResourceValidatorDictionary: map[string]*ResourceValidator{
+				"ibm_iam_account_settings":             resourceIBMIAMAccountSettingsValidator(),
 				"ibm_iam_custom_role":                  resourceIBMIAMCustomRoleValidator(),
 				"ibm_cis_healthcheck":                  resourceIBMCISHealthCheckValidator(),
 				"ibm_cis_rate_limit":                   resourceIBMCISRateLimitValidator(),
@@ -662,6 +665,10 @@ func Validator() ValidatorDict {
 				"ibm_schematics_action":                resourceIBMSchematicsActionValidator(),
 				"ibm_schematics_job":                   resourceIBMSchematicsJobValidator(),
 				"ibm_schematics_workspace":             resourceIBMSchematicsWorkspaceValidator(),
+				"ibm_resource_instance":                resourceIBMResourceInstanceValidator(),
+				"ibm_is_virtual_endpoint_gateway":      resourceIBMISEndpointGatewayValidator(),
+				"ibm_container_vpc_cluster":            resourceIBMContainerVpcClusterValidator(),
+				"ibm_container_cluster":                resourceIBMContainerClusterValidator(),
 			},
 			DataSourceValidatorDictionary: map[string]*ResourceValidator{
 				"ibm_is_subnet":               dataSourceIBMISSubnetValidator(),
