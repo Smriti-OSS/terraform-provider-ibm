@@ -1,4 +1,5 @@
 ---
+subcategory: "Enterprise Management"
 layout: "ibm"
 page_title: "IBM : enterprise_account"
 sidebar_current: "docs-ibm-resource-enterprise-account"
@@ -44,7 +45,7 @@ The following arguments are supported to import an existing standalone account i
 
 ## Attribute Reference
 
-The following attributes are exported:
+In addition to all arguments above, the following attributes are exported:
 
 * `id` - The unique identifier of the enterprise_account.
 * `account_id` - The source account ID.
